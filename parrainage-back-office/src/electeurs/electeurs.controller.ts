@@ -1,36 +1,33 @@
-import { Controller, Get, Post, Body, Param, Put, Delete } from '@nestjs/common';
-import { ElecteursService } from './electeurs.service';
-import { electeur } from './electeurs.entity';
+import { Controller, Post, UploadedFile, UseInterceptors, BadRequestException, Body } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import * as crypto from 'crypto';
+import * as fs from 'fs';
+import { diskStorage } from 'multer';
+import type { Express } from 'express';
 
 @Controller('electeurs')
 export class ElecteursController {
-    constructor(private readonly electeursService: ElecteursService) {}
-
-    @Post()
-    async create(@Body() electeurData: Partial<electeur>): Promise<electeur> {
-        return await this.electeursService.create(electeurData);
+  @Post('upload')
+  @UseInterceptors(FileInterceptor('file')) // Intercepteur Multer pour gérer le fichier
+  async uploadFile(@UploadedFile() file: Express.Multer.File, @Body() body) {
+    if (!file) {
+      throw new BadRequestException('Aucun fichier reçu');
     }
 
-    @Get()
-    async findAll(): Promise<electeur[]> {
-        return await this.electeursService.findAll();
+    console.log('Fichier reçu :', file.originalname);
+    console.log('Checksum reçu :', body.checksum);
+
+    // Lire le fichier et calculer son empreinte SHA256
+    const fileBuffer = fs.readFileSync(file.path);
+    const hash = crypto.createHash('sha256').update(fileBuffer).digest('hex');
+
+    console.log('SHA256 calculé :', hash);
+
+    // Vérifier si le SHA256 correspond à celui envoyé par l'utilisateur
+    if (hash !== body.checksum) {
+      throw new BadRequestException('Le fichier est corrompu ou son empreinte est incorrecte.');
     }
 
-    @Get(':id')
-    async findOne(@Param('id') id: string): Promise<electeur> {
-        return await this.electeursService.findOne(Number(id));
-    }
-
-    @Put(':id')
-    async update(
-        @Param('id') id: string,
-        @Body() updateData: Partial<electeur>,
-    ): Promise<electeur> {
-        return await this.electeursService.update(Number(id), updateData);
-    }
-
-    @Delete(':id')
-    async remove(@Param('id') id: string): Promise<void> {
-        return await this.electeursService.remove(Number(id));
-    }
+    return { message: 'Upload réussi', filename: file.filename };
+  }
 }

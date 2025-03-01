@@ -8,6 +8,13 @@ async function bootstrap() {
   app.setViewEngine('ejs');
   app.setBaseViewsDir(path.join(__dirname, '..', 'views'));
 
+  app.enableCors({
+    origin: "http://localhost:4200",
+    methods: "GET, HEAD, PUT, PATCH, POST, DELETE",
+    allowedHeaders: 'Content-Type, Authorization',
+    credentials: true
+  })
+
   await app.listen(3000);
 }
 bootstrap();

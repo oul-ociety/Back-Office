@@ -4,7 +4,10 @@ import { AppService } from './app.service';
 import { TypeOrmModule } from '@nestjs/typeorm'; //
 import { ConfigModule, ConfigService } from '@nestjs/config'; //
 import { AuthModule } from './auth/auth.module';
+import { ElecteursController } from './electeurs/electeurs.controller';
+import { ElecteursService } from './electeurs/electeurs.service';
 import { ElecteursModule } from './electeurs/electeurs.module';
+import { MulterModule } from '@nestjs/platform-express';
 
 @Module({
   imports: [
@@ -24,10 +27,10 @@ import { ElecteursModule } from './electeurs/electeurs.module';
         migrations: [__dirname + '/migrations/*{.ts,.js}'],
         migrationsRun: true,
       }),
-  }), AuthModule, ElecteursModule,
+  }), AuthModule, ElecteursModule, MulterModule.register({ dest: './uploads', })
     
   ],
-  controllers: [AppController],
-  providers: [AppService],
+  controllers: [AppController, ElecteursController],
+  providers: [AppService, ElecteursService],
 })
 export class AppModule {}
